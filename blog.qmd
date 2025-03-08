@@ -7,19 +7,23 @@ format: html
 
 Generating synthetic datasets is useful in various settings, from education to software testing, enabling controlled, customizable data. There are many tasks you might want to simulate data for, including:
 
-Teaching. You might need to demonstrate a particular skill or test students in a particular way that requires you to simulate data that precisely meets your teaching needs.
+* Teaching. You might need to demonstrate a particular skill or test students in a particular way that requires you to simulate data that precisely meets your teaching needs.
 
-Package or app testing. Simulated data is helpful for testing when developing packages or apps.
+* Package or app testing. Simulated data is helpful for testing when developing packages or apps.
 
-Prototyping a report. You might develop a report ahead of the data being available. Simulate data that matches how the final data will look so you can build your report, dashboard, or app ahead of time.
+* Prototyping a report. You might develop a report ahead of the data being available. Simulate data that matches how the final data will look so you can build your report, dashboard, or app ahead of time.
 
-Clinical trial simulations. Data simulation is a common task for clinical trial simulations.
+* Clinical trial simulations. Data simulation is a common task for clinical trial simulations.
 
 Popular large language models (LLMs) are great at simulating data, particularly if you don't care about the validity or realism of the data. You might have used the chat interface of ChatGPT or another LLM to simulate data. Some model providers even let you directly download a CSV of the data from the chat interface.
 
-However, if you want to pull that data into your coding environment or build a data product with the simulated data, it can be more expedient to use the LLM's API. In this blog post, we'll show you how interact with LLMs in R with the ellmer package, creating a command-line tools and Shiny app that generate synthetic data.
+However, if you want to pull that data into your coding environment or build a data product with the simulated data, it can be more expedient to use the LLM's API. In this blog post, we'll show you how interact with LLMs in R with the ellmer package, creating a command-line tool and a Shiny app that generate synthetic data. You can see the app here. 
 
-::: callout-tip Check out our recent blog post on ellmer! :::
+![By the end of this blog post, you'll learn how to create a Shiny app that generates synthetic data and visualizes it.](images/app.png)
+
+::: {.callout-tip}
+To learn more about ellmer, check out our [recent blog post](https://posit.co/blog/announcing-ellmer/).
+:::
 
 We're going to build up to a Shiny app that takes user input, simulates data, and visualizes and summarizes that data. But first, let's make a command-line tool.
 
