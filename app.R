@@ -9,9 +9,18 @@ library(DT)
 ui <- page_sidebar(
   title = "LLM Data Generator",
   sidebar = sidebar(
-    textAreaInput("data_description", "Describe the data you want to generate."),
+    textAreaInput(
+      "data_description", 
+      "Describe the data you want to generate.",
+      placeholder = "e.g., company financial data for 2020-2025"
+    ),
     actionButton("btn_generate", "Generate data"),
-    downloadButton("btn_download", "Download CSV")
+    downloadButton("btn_download", "Download CSV"),
+    card(
+      markdown("### About this app"),
+      "This app uses an LLM to generate synthetic data. Note that it will not generate more than 25 rows of data."
+    ),
+    width = 350
   ),
   useBusyIndicators(),
   card(
@@ -19,7 +28,7 @@ ui <- page_sidebar(
     dataTableOutput("data_table")
   ),
   card(
-    card_header("Plot data"),
+    card_header("Plot"),
     plotOutput("plot")
   )
 )
@@ -51,7 +60,7 @@ server <- function(input, output, session) {
   
   chat <- chat_openai(
     model = "gpt-4o",
-    system_prompt = read_lines("prompt-app.md")
+    system_prompt = read_lines(here::here("prompts/prompt-app.md"))
   )
 
   chat$register_tool(tool(
