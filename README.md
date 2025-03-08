@@ -1,1 +1,1 @@
-# data-generator-cli
+# Create synthetic datasets with LLMs and ellmer
