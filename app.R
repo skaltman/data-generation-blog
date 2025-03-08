@@ -1,10 +1,11 @@
 library(ellmer)
-library(dotenv)
 library(shiny)
 library(bslib)
 library(readr)
 library(ggplot2)
 library(DT)
+
+OPENAI_API_KEY <- Sys.getenv("OPENAI_API_KEY")
 
 ui <- page_sidebar(
   title = "LLM Data Generator",
