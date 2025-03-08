@@ -19,7 +19,13 @@ ui <- page_sidebar(
     downloadButton("btn_download", "Download CSV"),
     card(
       markdown("### About this app"),
-      "This app uses an LLM to generate synthetic data. Note that it will not generate more than 25 rows of data."
+      markdown(
+        "This app uses an LLM to generate **synthetic data**. 
+        The datasets generated do not contain factual data and should not be relied upon for information. 
+        
+        
+        Note that the app will not generate more than 25 rows of data."
+      )
     ),
     width = 350
   ),
