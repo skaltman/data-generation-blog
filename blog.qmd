@@ -1,39 +1,33 @@
 ---
-title: "Generate synthetic data with ellmer"
+title: "Use LLMs to generate datasets with ellmer"
+execute:
+  eval: false
 format: html
 ---
 
-Recent packages like ellmer and chatlas make it easy to make your own LLM tools. You can use ellmer and chatlas to interact with common LLM APIs, including OpenAI, Claude, and Gemini.
+Generating synthetic datasets is useful in various settings, from education to software testing, enabling controlled, customizable data. There are many tasks you might want to simulate data for, including:
 
-One use case for these tools is simulating data. There are a lot of things you want want to simulate data for:
+Teaching. You might need to demonstrate a particular skill or test students in a particular way that requires you to simulate data that precisely meets your teaching needs.
 
-* Teaching
-* Package or app testing 
-* Prototyping a report 
-* Clinical trial simulations
+Package or app testing. Simulated data is helpful for testing when developing packages or apps.
 
+Prototyping a report. You might develop a report ahead of the data being available. Simulate data that matches how the final data will look so you can build your report, dashboard, or app ahead of time.
 
-Use cases
-Generating data for teaching
-Generating data for simulation
-Generating data for testing
-Generating data for a prototype
-Data generation is a great use case of the LLM APIs
-You might be familiar with using the chat interface of the popular LLMs, but are curious about how to work with their APIs
-And why would you want to use their APIs?
-One reason is if the LLM can’t do what you want, but you think it probably would be able to
-We’ll take advantage of tool calling 
-For more, see the 
+Clinical trial simulations. Data simulation is a common task for clinical trial simulations.
 
-https://www.confident-ai.com/blog/the-definitive-guide-to-synthetic-data-generation-using-llms
+Popular large language models (LLMs) are great at simulating data, particularly if you don't care about the validity or realism of the data. You might have used the chat interface of ChatGPT or another LLM to simulate data. Some model providers even let you directly download a CSV of the data from the chat interface.
 
-Create a command line data generation tool with elmer
+However, if you want to pull that data into your coding environment or build a data product with the simulated data, it can be more expedient to use the LLM's API. In this blog post, we'll show you how interact with LLMs in R with the ellmer package, creating a command-line tools and Shiny app that generate synthetic data.
 
-## 
+::: callout-tip Check out our recent blog post on ellmer! :::
 
-First, let's see how to use the native LLM capability to generate data. The common LLM providers will simulate data for you, which you might have encountered through their chat interface. This capability is really useful, and some LLM's will even let you easily download that data as a CSV, but it's then still an extra step to pull it into R or Python. You might also want to generate the dataset through a Shiny app, which would require using the LLM API. 
+We're going to build up to a Shiny app that takes user input, simulates data, and visualizes and summarizes that data. But first, let's make a command-line tool.
 
-Let's build a small tool that uses the LLM to simulate some data. 
+## Command line tool
+
+As mentioned earlier, common LLM providers can simulate data for you, often through a chat interface. This capability is useful, and some LLMs even allow you to download that data as a CSV. However, this typically requires downloading the CSV and manually loading it into R or Python, which adds an extra step to the workflow. 
+
+Let's build a small tool in R that uses the LLM to simulate some data. 
 
 ## Setup
 
@@ -58,9 +52,9 @@ GOOGLE_API_KEY=api-key-google-palw2n
 
 ## Creat a basic chat with ellmer
 
-Now, we'll create a simple chat with ellmer. 
+Now, we'll create a chat with ellmer. 
 
-First, we use a `chat_*()` function to create a `Chat` object. Choose your `chat_*()` function based on your desired LLM provider. 
+The `chat_*()` functions, like `chat_openai()` and `chat_claude()`, each create a `Chat` object, essentially a record of the conversation with the user and the chatbot. Choose your `chat_*()` function based on your desired LLM provider (see the full list [here](https://ellmer.tidyverse.org/reference/index.html#chatbots)).
 
 ```{r}
 library(ellmer)
@@ -69,16 +63,14 @@ library(dotenv)
 chat <- chat_openai(
   model = "gpt-4o",
   system_prompt = 
-    "Generate tabular data based on the user's request. Limit the datat to 10 rows unless the user specifically requests more."
+    "Generate tabular data based on the user's request. Limit the data to 10 rows unless the user specifically requests more."
 )
 ```
 
-With ellmer, you specify the _provider_ by choosing a `chat_*()` function. LLM providers typically offer multiple _models_, and you can specify your desired model with the `model` argument. Here, we're using gpt-4o. 
-
-Specify the model with the `model` argument. Because we want to use this chat to generate data, we'll also set a system prompt specifying that the LLM should generate tabular data based on the criteria given by the user. 
+With ellmer, you specify the _provider_ by choosing a `chat_*()` function. LLM providers typically offer multiple _models_, and you can specify your desired model with the `model` argument. Here, we're using OpenAI's gpt-4o model. Because we want to use this chat to generate data, we'll also set a [system prompt](https://ellmer.tidyverse.org/articles/prompt-design.html) specifying that the LLM should generate tabular data based on the criteria given by the user. 
 
 ::: callout-tip
-It's best practice to write system prompts in a markdown file. Later, we'll write a longer systtem prompt and do jsut that, but for now we'll just specify it directly to the `system_prompt` argument. For more information about prompt design, see https://ellmer.tidyverse.org/articles/prompt-design.html.
+It's best practice to write system prompts in a markdown file. Later, we'll write a longer systtem prompt and do just that, but for now we'll just specify it directly to the `system_prompt` argument. For more information about prompt design, see https://ellmer.tidyverse.org/articles/prompt-design.html.
 :::
 
 We don't need to manually specify the API key because dotenv will load our environment variables and `chat_openai()` will look for a variable called `OPENAI_API_KEY`. 
@@ -92,7 +84,7 @@ library(dotenv)
 chat <- chat_openai(
   model = "gpt-4o",
   system_prompt = 
-    "Generate tabular data based on the user's request. Limit the datat to 10 rows unless the user specifically requests more."
+    "Generate tabular data based on the user's request. Limit the data to 10 rows unless the user specifically requests more."
 )
 
 chat$chat("Ask what kind of data the user wants to generate.", echo = TRUE) 
@@ -101,89 +93,89 @@ live_console(chat, quiet = TRUE)
 
 [`chat()`](https://ellmer.tidyverse.org/reference/Chat.html#method-Chat-chat) is a method of a `Chat` object that sends input to the chatbot. Here, our `Chat` object is called `chat`, so we call `chat$chat()`. Here, we tell the chatbot to ask what kind of data we want to generate. This means that when we start the console converstaion with `live_console()`, the chatbot will ask the user  what kind of data they want. 
 
-Let's try it out. 
+{{< video videos/01-command-line.mp4 >}}
 
 ## Parse the data
-
-[put in screencast]
 
 We've gotten the LLM to simulate data for us, but it's not really in a convenient format. If we wanted to pull this data into R, we would need to parse the string output from the LLM. Let's see if we can improve our command line LLM tool. 
 
 One way is to adjust the system prompt to specify the format of the data and then read that data into R. We can specify that we want the LLM to provide us data in a CSV format. Let's try that. 
 
-::: callout-tip
-One thing to look into if you're trying to _extract_ data instead of creating it from scratch: ellmer also includes tools for extracting structured data from text or images https://ellmer.tidyverse.org/articles/structured-data.html.
-:::
-
-To do so, we're going to need to expand the system prompt. Let's move the system prompt into its own Markdown file.
+To enforce this, we need to update our system prompt. Our goal is for the LLM to generate strings in a consistent format to avoid parsing errors when reading the data into R. 
 
 ```markdown
-Generate tabular data based on the user's request. Limit the datat to 10 rows unless the user specifically requests more.
+Generate tabular data based on the user's request. Limit the data to 10 rows unless the user specifically requests more.
 
-Generate the data in a format that is readable by the R function `readr::read_csv()`. 
+Generate the data in a format that is readable by the R function `readr::read_csv()`. For example:
+
+TransactionID, Make, Model, Year, Price, Salesperson
+001, Toyota, Camry, 2020, 24000, John Smith
+002, Honda, Accord, 2019, 22000, Jane Doe
+003, Ford, Explorer, 2021, 32000, Emily Johnson
+004, Chevrolet, Malibu, 2020, 23000, Michael Brown
+005, Nissan, Altima, 2021, 25000, Sarah Davis
+006, Hyundai, Elantra, 2019, 19000, David Wilson
+007, BMW, X3, 2020, 42000, Mary White
+008, Audi, A4, 2021, 38000, Robert Martinez
+009, Subaru, Outback, 2020, 27000, James Lee
+010, Kia, Soul, 2021, 21000, Linda Thompson
+
+Do not include any text formatting the data (e.g., no backticks).
 
 Do not include any other information with the dataset. 
 ```
 
-::: callout-tip
-Adding examples to system prompts is very helpful. 
-:::
-
-```r
-library(ellmer)
-library(dotenv)
-
-chat <- chat_openai(
-  model = "gpt-4o",
-  system_prompt = readr::read_lines("prompt.md")
-)
-
-chat$chat("Ask what kind of data the user wants to generate.", echo = TRUE) 
-live_console(chat, quiet = TRUE) 
-```
+Now, the LLM should generate data in a format that's easy for us to read into R. Now, instead of making a command-line chat, let's turn this into a function. 
 
 ```{r}
 library(ellmer)
 library(dotenv)
-library(readr)
 
-chat <- chat_openai(
-  model = "gpt-4o",
-  system_prompt = read_lines("prompt.md")
-)
-
-csv_string <- chat$chat("cat toy data", echo = FALSE) 
-df <- read_csv(csv_string, show_col_types = FALSE)
-df
-```
-
-Now, let's turn this into a function. 
-
-```{r}
 generate_data <- function(data_description) {
-    chat <- chat_openai(
-        model = "gpt-4o",
-        system_prompt = read_lines("prompt.md")
-    )
+  chat <- chat_openai(
+    model = "gpt-4o",
+    system_prompt = readr::read_lines("prompt.md")
+  )
 
-    csv_string <- chat$chat(data_description, echo = FALSE) 
+  csv_string <- chat$chat(data_description, echo = FALSE) 
 
-    read_csv(csv_string, show_col_types = FALSE)
+  readr::read_csv(csv_string, show_col_types = FALSE)
 }
 ```
 
-Now, we can pass in the description to the function to generate a dataset, without chatting with the chatbot in the console. This will make it easier to use the function in a Shiny app, or 
-to quickly generate datasets. 
+And then call the function, passing in a description of the data we want to generate.
+
+```{r}
+generate_data("tax revenue data by state, with three columns")
+```
+
+```
+# A tibble: 10 × 3
+   state      tax_rate revenue_millions
+   <chr>         <dbl>            <dbl>
+ 1 Alabama        4                2150
+ 2 Alaska         0                 980
+ 3 Arizona        5.6              3250
+ 4 California     7.25             8900
+ 5 Florida        6                4500
+ 6 Georgia        4                2800
+ 7 Hawaii         4                1200
+ 8 Idaho          6                 890
+ 9 Illinois       6.25             4100
+10 Texas          6.25             6300
+```
+
+Now, we can pass in the description to the function to generate a dataset, without chatting with the chatbot in the console. This will make it easier to programmatically use the function (e.g., in a Shiny app).
 
 ## Tool calling
 
-One issue is there's no consequence if the LLM decides to generate data that doesn't match our criteria. `read_csv()` will fail, and then we'll need to run the function again (or adjust our prompt) until we're successful.
+One issue is there's no correction mechanism if the LLM accidentally generates data that doesn't match our criteria. `read_csv()` will fail, and then we'll need to run the function again (or adjust our prompt) until we're successful.
 
-We can use _tool calling_ to improve this process. Generally, you use tool calling to extend the functionality of an LLM. For example, LLM models generally don't know the time at your location, but we can write an R function that returns that information. Then, we tell the LLM to call that R function and use the result in some way, essentially granting the LLM new skills. 
+We can use tool calling to ensure that the LLM generates correctly formatted data and can automatically retry if an error occurs.. Generally, you use tool calling to extend the functionality of an LLM. For example, LLM models generally don't know the time at your location, but we can write an R function that returns that information. Then, we tell the LLM to call that R function and use the result in some way, essentially granting the LLM new skills. 
 
-Here, the LLM can already generate data, but it can't actually read that data into R (because our chatbot can write R code, but can't run R code). 
+In our example, the LLM can generate data as text, but can't actually read that data into R. We'll create a tool that reads the data generated by the LLM into R. ellmer will handle retrying if the tool call fails because the chatbot generates a string that read_csv() can't parse. 
 
-For more information about tool calling, see the [Tool Calling article](https://ellmer.tidyverse.org/articles/tool-calling.html) on the ellmer website. 
+For more information about tool calling, see the [Tool Calling article](https://ellmer.tidyverse.org/articles/tool-calling.html) on the ellmer website.
 
 ## Define a tool function
 
@@ -199,11 +191,9 @@ read_csv_string <- function(csv_string) {
 }
 ```
 
-There's not much going on in our function, but that's ok!
-
 ## Register the tool
 
-Now, we need to tell the LLM about our function. We do this by _registering_ the tool using the `Chat` method `register_tool()` and the function `tool()`. You don't need to write this code yourself. Instead, you can use `ellmer::create_tool_def()` to generate the `register_tool()` call. For example:
+Now, we need to tell the LLM about our function. We do this by _registering_ the tool using the `Chat` method `register_tool()` and the function `tool()`. Registering the tool tells the chat bot about the tool and how to use it. You don't need to write the tool registering code yourself. Instead, you can use `ellmer::create_tool_def()` to generate the `register_tool()` call. For example:
 
 ```{r}
 create_tool_def(read_csv_string)
@@ -221,7 +211,7 @@ tool(
 ```
 ````
 
-Now, we can copy-and-paste that code into `chat$register_tool()`. This tells the LLM about our function and explains what kind of arguments it should pass to the function. To learn more about defining a tool with `tool()`, see https://ellmer.tidyverse.org/reference/tool.html. 
+Now, we can copy and paste the above code into `chat$register_tool()`. This tells the LLM about our function and explains what kind of arguments it should pass to the function. To learn more about defining a tool with `tool()`, see https://ellmer.tidyverse.org/reference/tool.html. 
 
 ```{r}
 chat$register_tool(
@@ -235,12 +225,43 @@ chat$register_tool(
 )
 ```
 
+Here's the full script:
+
+```{r}
+library(ellmer)
+library(dotenv)
+library(readr)
+
+#' Reads a CSV string into R using `readr::read_csv()`
+#'
+#' @param csv_string A single string representing literal data in CSV format, able to be read by `readr::read_csv()`.
+#' @return A tibble. 
+read_csv_string <- function(csv_string) {
+  read_csv(csv_string, show_col_types = FALSE)
+}
+
+chat <- chat_openai(
+  model = "gpt-4o",
+  system_prompt = read_lines("prompt-csv-string-tool.md")
+)
+
+chat$register_tool(tool(
+  read_csv_string,
+  "Parses a string containing CSV formatted data and reads it into a data frame.",
+  csv_string = type_string(
+    "CSV string containing the data to be read."
+  )
+))
+
+chat$chat("tax data by state, with three columns", echo = FALSE) 
+```
+
 ## Update your prompt 
 
-The final step is to update our prompt to instruct the LLM when to use the tool. Because the usage of our tool is pretty simple, we could probably get away without this step, but it's good practice and will make it more likely that the LLM behaves as we want it to.
+The final step is to update our prompt to instruct the LLM when to use the tool. Because the usage of our tool is pretty simple, we could probably get away without this step, but it's good practice and will make it more likely that the model behaves as we want it to.
 
 ```markdown
-Generate tabular data based on the user's request. Limit the datat to 10 rows unless the user specifically requests more.
+Generate tabular data based on the user's request. Limit the data to 10 rows unless the user specifically requests more.
 
 Create a string of data in a format that is readable by the R function `readr::read_csv()`. For example:
 
@@ -263,34 +284,159 @@ Then, pass that string of data to the function `read_csv_string()`. This functio
 Treat a tibble response from `read_csv_string()` as a success. If the function throws an error, treat that as a failure and re-call the function with a different string of data.  
 ```
 
-Alone, however, this script isn't very helpful. The LLM generates data, but it doesn't get saved anywhere! And `chat$chat()` returns as a string, so if we ask the LLM to return our table we're going to run into the same issue as before: we need a way to read it into R.
+Alone, however, our script isn't very helpful. The LLM generates data, but it doesn't get saved anywhere. `chat$chat()` returns as a string, so if we ask the LLM to return our table we're going to run into the same issue as before: we need a way to read it into R.
 
-To allow the data to persist, we could write it to a file or database. Another option for this functionality is to embed it in a Shiny app that lets the user generate data and then visualize it. In that case, we could update a reactive value to the generated data. 
+To allow the data to persist, we could write it to a file or database. Another option for this functionality is to embed it in a Shiny app that lets the user generate data and then visualize it. In that case, we could update a reactive value to the generated data. Let's see how that would work.
 
-You can see that app here--it also includes a tool call that plots the data. 
+## Embed data generation in a Shiny app
 
-## Another option
+To embed our data generation functionality in a Shiny app, we'll need to do three main things:
 
-Even though 
+1. Create an input to capture the user's dataset description, and then tell the model about that input.
+2. Edit our tool function to assign the created dataset to a reactive value. This will let us use the newly created dataset in various places in the Shiny app.
+3. Update our prompt.
 
-Use `create_tool_def(read_csv_string)` to create the register tool code
+First, let's manage the user input. In the app UI, we'll need some kind of text input and a button that triggers the data generation. 
 
-Let's build a command-line tool that simulates data for you. text
+```{r}
+# Define the app UI
+ui <- page_sidebar(
 
-# Step 1 - setup
-# Install ellmer and dotenv
-# Add an API key for your LLM 
+  sidebar = sidebar(
+    textAreaInput("data_description", "Describe the data you want to generate."),
+    actionButton("btn_generate", "Generate data")
+  )
+  
+  # Rest of the UI
+)
+```
 
-# Step 2 - create a basic chat with elmer
-# we're going to outline how our script will work and then move back to the prompt
-# first, we're going to just create a chat with ellmer and start the chat
+Now, in the server function we'll create a `Chat` and then send the user's dataset description to the chatbot when the user clicks the button.
 
-# Step 3 - get ellmer to generate data
-# this is actually pretty straightforward
-# it can generate data for us
-# and if you’re using a chat interface, you can even download it as a csv
-# but what if you want this functionality in a shiny app, or you want to immediately use the data in r or python? 
-# also, this isn’t very reproducible. It’s just a string
+```{r}
+# Server function
+server <- function(input, output, session) {
+  
+  chat <- chat_openai(
+    model = "gpt-4o",
+    system_prompt = read_lines("prompt-app.md")
+  )
 
+  # When btn_generate is clicked, send data_description to the chatbot
+  observeEvent(input$btn_generate, {
+    chat$chat(input$data_description)
+  })
 
-If you know the column names and types of data you want to generate, you could also use structured data. 
+  # Rest of the server function
+
+}
+
+shinyApp(ui, server)
+```
+
+Next, we need to add our tool-calling functionality. Just like before, we need to define the tool function and then register the tool. This will look similar to how we defined a tool earlier, with one change: we'll update a reactive value to the created dataset.
+
+```{r}
+# Server function
+server <- function(input, output, session) {
+
+  # Create a reactive value for the data
+  data_rv <- reactiveVal()
+
+  # /* Define tools */
+
+  #' Reads a CSV string into R using `readr::read_csv()`
+  #'
+  #' @param csv_string A single string representing literal data in CSV format, able to be read by `readr::read_csv()`.
+  #' @return A tibble. 
+  read_csv_string <- function(csv_string) {
+    df <- read_csv(csv_string, show_col_types = FALSE)
+    
+    # Update reactive value
+    data_rv(df)
+  }
+  
+  chat <- chat_openai(
+    model = "gpt-4o",
+    system_prompt = read_lines("prompt-app.md")
+  )
+
+  # /* Register tools */
+
+  chat$register_tool(tool(
+    read_csv_string,
+    "Parses a string containing CSV formatted data and reads it into a data frame.",
+    csv_string = type_string(
+      "CSV string containing the data to be read."
+    )
+  ))
+
+  # Rest of the server function
+  # ...
+
+}
+```
+
+Now, we'll be able to use the generated dataset in the rest of our app. We'll add functionality to download the data as a CSV, view the data in a table, and visualize the data in a plot. 
+
+[app image]
+
+We'll need to make a few changes to the prompt, mostly telling the app how to use plotting tool. You can see the full prompt here. 
+
+## Other options
+
+### Code generation
+
+We relied on the LLMs native data generation capabilities, asking the model to create a string of data. This works pretty well for the small examples shown here, but you may want more control over the data, care about reproducibility, or have specific requirements for the data that the LLM's data generation doesn't do a great job of.
+
+Another option is to ask the LLM to generate R code that creates data, which provides a lot of flexibility, but may take careful prompt design. Alternatively, you could ask teh LLM to provide inputs to an R function that generates data (e.g., using functions like `rnorm()` or with a package like [charlatan](https://docs.ropensci.org/charlatan/)), which would give you greater control over the data structure. 
+
+Below is a tool function that evaluates code passed as a string. You can see the full example here. 
+
+```{r}
+#' Evaluates R code that simulates data.
+#'
+#' @param code A single string containing valid R code that generates data.
+#' @return A tibble. 
+create_data <- function(code) {
+  tryCatch(
+    {
+      df <- eval(parse(text = code))
+    },
+    error = function(err) {
+      stop(err)
+    }
+  )
+
+  stopifnot(is.data.frame(df))
+
+  write_csv(df, "data-from-code.csv")
+}
+```
+
+If you know the column names and types of data you want to generate, you could also use [structured data](https://ellmer.tidyverse.org/articles/structured-data.html). The structured data features allows you to define the elements of data you want to extract from text or images. Below, we ask the LLM to generate data in the same way as before. Then, however, we use `extract_data()` and `type_*()` function to extract specific pieces of data from that response, instead of reading the string repsonse in as CSV like we did earlier. The result is the same: a dataframe. However, this only works if you know the number of columns and their types that you want to extract. 
+
+```{r}
+chat <- chat_openai(
+  model = "gpt-4o",
+  system_prompt = "Given a description, generate structured data."
+)
+
+response <- 
+  chat$chat(
+    "data with 2 columns, x and y. x should have a normal distribution and y be random strings.",
+    echo = FALSE
+  )
+
+df <-
+  chat$extract_data(
+    response,
+    type = type_array(
+      items = type_object(
+        x = type_number(),
+        y = type_string()
+      )
+    )
+  )
+```
+

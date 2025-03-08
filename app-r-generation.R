@@ -25,6 +25,8 @@ ui <- page_sidebar(
 )
 
 server <- function(input, output, session) {
+
+  # Reactive values for the data and plot
   data_rv <- reactiveVal()
   plot_rv <- reactiveVal()
 
@@ -32,10 +34,10 @@ server <- function(input, output, session) {
   #'
   #' @param csv_string A single string representing literal data in CSV format, able to be read by `readr::read_csv()`.
   #' @return A tibble. 
-  read_csv_string <- function(csv_string) {
-    df <- read_csv(csv_string, show_col_types = FALSE)
-    data_rv(df)
-  }
+  # read_csv_string <- function(csv_string) {
+  #   df <- read_csv(csv_string, show_col_types = FALSE)
+  #   data_rv(df)
+  # }
 
   #' Executes a string of R code creating a ggplot2
   #'
@@ -48,17 +50,45 @@ server <- function(input, output, session) {
 
     plot_rv(p)
   }
+
+  #' Evaluates R code that simulates data.
+  #'
+  #' @param code A single string containing valid R code that generates data.
+  #' @return A tibble. 
+  create_data <- function(code) {
+    tryCatch(
+      {
+        df <- eval(parse(text = code))
+      },
+      error = function(err) {
+        stop(err)
+      }
+    )
+
+    stopifnot(is.data.frame(df))
+
+    data_rv(df)
+  }
   
   chat <- chat_openai(
     model = "gpt-4o",
-    system_prompt = read_lines("prompt-app.md")
+    system_prompt = read_lines("prompt-app-r-generation.md")
   )
 
+  # chat$register_tool(tool(
+  #   read_csv_string,
+  #   "Parses a string containing CSV formatted data and reads it into a data frame.",
+  #   csv_string = type_string(
+  #     "CSV string containing the data to be read."
+  #   )
+  # ))
+
+
   chat$register_tool(tool(
-    read_csv_string,
-    "Parses a string containing CSV formatted data and reads it into a data frame.",
-    csv_string = type_string(
-      "CSV string containing the data to be read."
+    create_data,
+    "Executes R code passed a string to create a dataframe.",
+    code = type_string(
+        "A string contained valid R code that generates data and creates a tibble. Only use functions from base R or the tidyverse packages."
     )
   ))
 
@@ -72,7 +102,7 @@ server <- function(input, output, session) {
 
 
   observeEvent(input$btn_generate, {
-    chat$chat(input$data_description)
+    chat$chat(input$data_description, echo = FALSE)
   })
 
   output$btn_download <- downloadHandler(

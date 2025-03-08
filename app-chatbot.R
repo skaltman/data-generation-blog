@@ -1,3 +1,4 @@
+library(tidyverse)
 library(ellmer)
 library(dotenv)
 library(shiny)
@@ -5,12 +6,12 @@ library(bslib)
 library(readr)
 library(ggplot2)
 library(DT)
+library(shinychat)
 
 ui <- page_sidebar(
   title = "LLM Data Generator",
   sidebar = sidebar(
-    textAreaInput("data_description", "Describe the data you want to generate."),
-    actionButton("btn_generate", "Generate data"),
+    chat_ui("chat", height = "100%", fill = TRUE),
     downloadButton("btn_download", "Download CSV")
   ),
   useBusyIndicators(),
@@ -25,6 +26,8 @@ ui <- page_sidebar(
 )
 
 server <- function(input, output, session) {
+
+  # Reactive values for the data and plot
   data_rv <- reactiveVal()
   plot_rv <- reactiveVal()
 
@@ -33,7 +36,27 @@ server <- function(input, output, session) {
   #' @param csv_string A single string representing literal data in CSV format, able to be read by `readr::read_csv()`.
   #' @return A tibble. 
   read_csv_string <- function(csv_string) {
+    print("here")
     df <- read_csv(csv_string, show_col_types = FALSE)
+    data_rv(df)
+  }
+
+  #' Evaluates R code that simulates data.
+  #'
+  #' @param code A single string containing valid R code that generates data.
+  #' @return A tibble. 
+  create_data <- function(code) {
+    tryCatch(
+      {
+        df <- eval(parse(text = code))
+      },
+      error = function(err) {
+        stop(err)
+      }
+    )
+
+    stopifnot(is.data.frame(df))
+
     data_rv(df)
   }
 
@@ -49,16 +72,22 @@ server <- function(input, output, session) {
     plot_rv(p)
   }
   
-  chat <- chat_openai(
-    model = "gpt-4o",
-    system_prompt = read_lines("prompt-app.md")
+  chat <- chat_claude(
+    system_prompt = read_lines("prompt-app-r-generation.md")
   )
 
+  chat_append("chat", "Describe a data set.")
+
+  observeEvent(input$chat_user_input, {
+    stream <- chat$stream_async(input$chat_user_input)
+    # chat_append("chat", stream)
+  })
+
   chat$register_tool(tool(
-    read_csv_string,
-    "Parses a string containing CSV formatted data and reads it into a data frame.",
-    csv_string = type_string(
-      "CSV string containing the data to be read."
+    create_data,
+    "Executes R code passed a string to create a dataframe.",
+    code = type_string(
+        "A string contained valid R code that generates data and creates a tibble. Only use functions from base R or the tidyverse packages."
     )
   ))
 
@@ -69,11 +98,6 @@ server <- function(input, output, session) {
       "A string containing valid R code that uses ggplot2 to visualize a dataframe named `df`."
     )
   ))
-
-
-  observeEvent(input$btn_generate, {
-    chat$chat(input$data_description)
-  })
 
   output$btn_download <- downloadHandler(
     filename = glue::glue("data_{Sys.Date()}.csv"),
@@ -89,6 +113,7 @@ server <- function(input, output, session) {
   output$plot <- renderPlot({
     plot_rv()
   })
+
 }
 
 shinyApp(ui, server)

@@ -12,7 +12,7 @@ read_csv_string <- function(csv_string) {
 
 chat <- chat_openai(
   model = "gpt-4o",
-  system_prompt = read_lines("prompt-csv-string-tool.md")
+  system_prompt = read_lines(here::here("prompts/prompt-csv-string-tool.md"))
 )
 
 chat$register_tool(tool(
@@ -23,6 +23,5 @@ chat$register_tool(tool(
   )
 ))
 
-csv_string <- chat$chat("cat toy data", echo = FALSE) 
-# df <- read_csv(csv_string, show_col_types = FALSE)
+chat$chat("tax data by state, with three columns", echo = FALSE) 
 
