@@ -20,11 +20,11 @@ ui <- page_sidebar(
     card(
       markdown("### About this app"),
       markdown(
-        "This app uses an LLM to generate **synthetic data**. 
-        The datasets generated do not contain factual data and should not be relied upon for information. 
+        "Note: This app uses an large language model to generate **synthetic data**. 
+        The datasets generated do not necessarily contain factual data and should not be relied upon for information. 
         
         
-        Note that the app will not generate more than 25 rows of data."
+        The app will not generate more than 25 rows of data."
       )
     ),
     width = 350
