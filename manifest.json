@@ -2995,43 +2995,6 @@
         "Built": "R 4.3.3; ; 2024-08-01 12:24:50 UTC; unix"
       }
     },
-    "shinychat": {
-      "Source": "github",
-      "Repository": null,
-      "description": {
-        "Package": "shinychat",
-        "Title": "Chat UI Component for Shiny",
-        "Version": "0.0.0.9000",
-        "Authors@R": "c(\n    person(\"Joe\", \"Cheng\", , \"joe@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Carson\", \"Sievert\", , \"carson@posit.co\", role = c(\"aut\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
-        "Description": "Provides a chat UI component for Shiny apps.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://github.com/jcheng5/shinychat,\nhttps://jcheng5.github.io/shinychat/",
-        "BugReports": "https://github.com/jcheng5/shinychat/issues",
-        "Imports": "bslib, coro, htmltools, rlang, shiny",
-        "Suggests": "promises, testthat (>= 3.0.0)",
-        "Encoding": "UTF-8",
-        "Roxygen": "list(markdown = TRUE)",
-        "RoxygenNote": "7.3.2",
-        "Config/testthat/edition": "3",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "RemoteType": "github",
-        "RemoteHost": "api.github.com",
-        "RemoteRepo": "shinychat",
-        "RemoteUsername": "jcheng5",
-        "RemotePkgRef": "jcheng5/shinychat",
-        "RemoteRef": "HEAD",
-        "RemoteSha": "cc5221123c42137405c921bf1711c2de1e0408a1",
-        "GithubRepo": "shinychat",
-        "GithubUsername": "jcheng5",
-        "GithubRef": "HEAD",
-        "GithubSHA1": "cc5221123c42137405c921bf1711c2de1e0408a1",
-        "NeedsCompilation": "no",
-        "Packaged": "2024-12-03 23:56:14 UTC; saraa",
-        "Author": "Joe Cheng [aut, cre],\n  Carson Sievert [aut],\n  Posit Software, PBC [cph, fnd]",
-        "Maintainer": "Joe Cheng <joe@posit.co>",
-        "Built": "R 4.3.3; ; 2024-12-03 23:56:15 UTC; unix"
-      }
-    },
     "sourcetools": {
       "Source": "CRAN",
       "Repository": "https://cran.rstudio.com",
