@@ -1,5 +1,4 @@
 library(ellmer)
-library(dotenv)
 
 # Replace chat_openai() with a different chat_* function to switch LLM providers
 chat <- chat_openai(

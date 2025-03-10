@@ -1,5 +1,4 @@
 library(ellmer)
-library(dotenv)
 library(tidyverse)
 
 #' Evaluates R code that simulates data.

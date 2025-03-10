@@ -1,5 +1,4 @@
 library(ellmer)
-library(dotenv)
 library(readr)
 
 #' Reads a CSV string into R using `readr::read_csv()`

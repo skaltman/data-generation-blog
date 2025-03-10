@@ -1,5 +1,4 @@
 library(ellmer)
-library(dotenv)
 library(tidyverse)
 library(duckdb)
 library(DBI)

@@ -1,5 +1,4 @@
 library(ellmer)
-library(dotenv)
 
 chat <- chat_openai(
   model = "gpt-4o",

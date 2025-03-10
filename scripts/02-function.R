@@ -1,5 +1,4 @@
 library(ellmer)
-library(dotenv)
 
 generate_data <- function(data_description) {
   chat <- chat_openai(
