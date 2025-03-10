@@ -465,6 +465,10 @@ chat$register_tool(tool(
 
 See the [full example](https://github.com/skaltman/data-generation-blog/blob/main/scripts/06-sql.R) and [prompt](https://github.com/skaltman/data-generation-blog/blob/main/prompts/prompt-sql.md). 
 
+::: {.callout-caution}
+Letting an LLM generate and execute code provides flexibility, but can be risky. Be careful to clearly specify what code you want and don’t want the model to run. Set guardrails in your prompts, check the code before executing, and put additional safeguards in place whenever possible.
+:::
+
 ## Structured data
 
 If you know the column names and types of data you want to generate, you could also use [structured data](https://ellmer.tidyverse.org/articles/structured-data.html). The structured data features allows you to define the elements of data you want to extract from text or images. However, this only works if you know the number of columns and their types that you want to extract. 
