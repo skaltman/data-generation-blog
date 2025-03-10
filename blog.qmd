@@ -5,29 +5,43 @@ execute:
 format: html
 ---
 
-Generating realistic, but fake, datasets is useful in various settings, from education to software testing, enabling controlled data that precisely fits your needs. There are many tasks you might want to simulate data for, including:
+Generating realistic, but fake, datasets is useful in various settings, from education to software testing, enabling controlled data that precisely fits your needs. 
 
-* **Package or app testing**. Fake, but realistic, data is helpful for testing when developing packages or apps.
+In this blog post, we'll show you how to **use the [ellmer package](https://ellmer.tidyverse.org/) to generate datasets with an LLM.** ellmer simplifies the process of working with LLMs from R. 
 
-* **Teaching**. You might need to demonstrate a particular skill or test students in a particular way that requires you to create data that precisely meets your teaching needs.
+![Among other tools, we'll create an R function that generates data with an LLM.](videos/03-command-line-function.mp4)
 
-* **Prototyping a report**. You might need to create a report before the data is available. Simulate data that matches how the final data will look so you can build your report, dashboard, or app ahead of time.
+Specifically, we will:
 
-* **Clinical trial simulations**. You might simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting an actual clinical trial.
-
-* **Synthetic data for model training or validation**. Synthetic data overcomes the limitations of real datasets in model development, letting you protect user privacy, simulate edge-case scenarios, and augment existing data. Synthetic data is especially valuable when real data is scarce. 
-
-Popular large language models (LLMs) are great at simulating data, particularly when accuracy or strict realism isn't required. You might have used the chat interface of ChatGPT or another LLM to simulate data. Some model providers even let you directly download a CSV of the data from the chat interface.
-
-However, if you want to integrate the data directly into your coding environment or automate data generation, using the LLM's API will streamline the process. In this blog post, **we'll show you how to interact with LLMs in R with the ellmer package**, creating a command-line tool and a Shiny app that simulate data. You can see the deployed app [here](https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38). 
-
-![By the end of this blog post, you'll learn how to create a Shiny app that generates a dataset and visualizes it.](images/app.png)
+1. Use **ellmer to create a command-line tool** that generates data from a given description. 
+2. Use ellmer and Shiny to **create a [Shiny app](https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38) that generates data, visualizes it, and makes it available for download.**
 
 ::: {.callout-tip}
 To learn more about ellmer, check out our [recent blog post](https://posit.co/blog/announcing-ellmer/).
 :::
 
-We're going to build up to a Shiny app that takes user input, simulates data, and visualizes and summarizes that data. But first, **let's make a command-line tool.**
+
+## Why simulate data with an LLM?
+
+There are many tasks you might want to simulate realistic-looking data for, including:
+
+* **Package or app testing**. Fake data that matches certain criteria is helpful for testing when developing packages or apps.
+
+* **Teaching**. You might need to demonstrate a particular skill or test students in a particular way that requires you to create data that precisely meets your teaching needs.
+
+* **Prototyping a report**. Design a report, dashboard, or app before the data is available by creating data in the same format as the real data. 
+
+* **Clinical trial simulations**. You might simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting an actual clinical trial.
+
+* **Synthetic data for model training or validation**. Synthetic data overcomes the limitations of real datasets in model development, letting you protect user privacy, simulate edge-case scenarios, and augment existing data. Synthetic data is especially valuable when real data is scarce. 
+
+Popular large language models (LLMs) are great at simulating data, particularly when accuracy or strict realism isn't required. Using an LLM can substantially speed up the process of dataset creation. 
+
+You might have used ChatGPT or another LLM's chat interface to simulate data. Some model providers even let you download the data directly as a CSV. However, this workflow requires manual interaction: using the chat interface, downloading the file, and loading it into your coding environment.
+
+To generate datasets programmatically, you'll want to interact directly with the LLM’s API. That's where ellmer comes in. **We'll use ellmer to interact with the LLM and generate data programmatically and entirely from R.**
+
+First, let's make our command-line tool. 
 
 # Command-line chat
 
@@ -302,6 +316,10 @@ To allow the data to persist, we could write it to a file or database. If we're 
 
 # Generate data from a Shiny app
 
+::: {.callout-tip}
+Experiment with the deployed app [here](https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38).
+:::
+
 To embed our data generation functionality in a Shiny app, we'll need to do three main things:
 
 1. Create an input to capture the user's dataset description, and then tell the model about that input.
@@ -393,7 +411,7 @@ Now, we'll be able to use the generated dataset in the rest of our app. We'll ad
 
 {{< video videos/02-app.mp4 >}}
 
-We'll need to make a few changes to the prompt, including telling the app how to use plotting tool. You can see the full prompt [here](https://github.com/skaltman/data-generation-blog/blob/main/prompts/prompt-app.md). 
+We'll need to make a few changes to the prompt, including telling the app how to use the plotting tool. You can see the full prompt [here](https://github.com/skaltman/data-generation-blog/blob/main/prompts/prompt-app.md). 
 
 # Other strategies 
 
@@ -429,6 +447,8 @@ create_data <- function(code) {
 If you want to store the data in a database, you could also ask the LLM to write SQL code to generate the data and write to a database. 
 
 ```{r}
+con <- dbConnect(duckdb(), dbdir = ":memory:", read_only = FALSE)
+
 #' Executes a SQL query to create a new table with simulated data
 #'
 #' @param query A DuckDB SQL query; must be a CREATE statement.
@@ -468,7 +488,7 @@ Letting an LLM generate and execute code provides flexibility, but can be risky.
 
 ## Structured data
 
-If you know the column names and types of data you want to generate, you could also use [structured data](https://ellmer.tidyverse.org/articles/structured-data.html). The structured data features allows you to define the elements of data you want to extract from text or images. However, this only works if you know the number of columns and their types that you want to extract. 
+If you know the column names and types of data you want to generate, you could also use [structured data](https://ellmer.tidyverse.org/articles/structured-data.html). The structured data feature allows you to define the elements of data you want to extract from text or images. However, this only works if you know the number of columns and their types that you want to extract. 
 
 ```{r}
 chat <- chat_openai(
