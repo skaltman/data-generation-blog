@@ -19,7 +19,7 @@ Generating realistic, but fake, datasets is useful in various settings, from edu
 
 Popular large language models (LLMs) are great at simulating data, particularly when accuracy or strict realism isn't required. You might have used the chat interface of ChatGPT or another LLM to simulate data. Some model providers even let you directly download a CSV of the data from the chat interface.
 
-However, if you want to integrate the data directly into your coding environment or automate data generation, using the LLM's API will streamline the process. In this blog post, **we'll show you how interact with LLMs in R with the ellmer package**, creating a command-line tool and a Shiny app that simulate data. You can see the deployed app [here](https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38). 
+However, if you want to integrate the data directly into your coding environment or automate data generation, using the LLM's API will streamline the process. In this blog post, **we'll show you how to interact with LLMs in R with the ellmer package**, creating a command-line tool and a Shiny app that simulate data. You can see the deployed app [here](https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38). 
 
 ![By the end of this blog post, you'll learn how to create a Shiny app that generates a dataset and visualizes it.](images/app.png)
 
@@ -40,13 +40,15 @@ Let's build a small tool in R using the [ellmer package](https://ellmer.tidyvers
 First, we need to download the necessary packages and set up API keys. You'll need:
 
 * [ellmer](https://ellmer.tidyverse.org/), which simplifies the process of interacting with LLMs from R, and
-* [dotenv](https://github.com/gaborcsardi/dotenv), which will simplify the process of using our API keys from your R environment.
+* [usethis](https://usethis.r-lib.org/), which we'll use to set up the API keys.
 
 ```{r}
-install.packages(c("ellmer", "dotenv"))
+install.packages(c("ellmer", "usethis"))
 ```
 
-Next, add your API key(s) to your `.Renviron` file. You can choose the LLM that you want to work with. ellmer includes functions for working with OpenAI, Anthropic, Gemini, and other providers. You can see a full list of supported providers [here](https://ellmer.tidyverse.org/#providers). 
+Next, add your API key(s) to your `.Renviron` file. Easily edit your `.Renviron` with `usethis::edit_r_environ()`. 
+
+You can choose the LLM that you want to work with. ellmer includes functions for working with OpenAI, Anthropic, Gemini, and other providers. You can see a full list of supported providers [here](https://ellmer.tidyverse.org/#providers). 
 
 Add your desired API key(s) to your `.Renviron`, for example:
 
@@ -64,7 +66,6 @@ The `chat_*()` functions, like `chat_openai()` and `chat_claude()`, each create 
 
 ```{r}
 library(ellmer)
-library(dotenv)
 
 chat <- chat_openai(
   model = "gpt-4o",
@@ -82,7 +83,6 @@ Because we want to use this chat to generate data, we'll also **specify a [syste
 It's best practice to write system prompts in a markdown file. Later, we'll write a longer system prompt and do just that, but for now we'll just specify it directly to the `system_prompt` argument. For more information about prompt design, see [https://ellmer.tidyverse.org/articles/prompt-design.html](https://ellmer.tidyverse.org/articles/prompt-design.html).
 :::
 
-We don't need to manually specify the API key because dotenv loads our environment variables and `chat_openai()` will look for a variable called `OPENAI_API_KEY`. 
 
 ## Start the chat
 
@@ -90,7 +90,6 @@ Next, we start off the chat by telling the LLM to ask the user about the data th
 
 ```{r}
 library(ellmer)
-library(dotenv)
 
 chat <- chat_openai(
   model = "gpt-4o",
@@ -142,7 +141,6 @@ With this prompt, the model should generate data in a format that's easy for us 
 
 ```{r}
 library(ellmer)
-library(dotenv)
 
 generate_data <- function(data_description) {
   chat <- chat_openai(
@@ -242,7 +240,6 @@ Here's the full script:
 
 ```{r}
 library(ellmer)
-library(dotenv)
 library(readr)
 
 #' Reads a CSV string into R using `readr::read_csv()`
