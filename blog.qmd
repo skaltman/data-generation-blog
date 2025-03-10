@@ -1,25 +1,27 @@
 ---
-title: "Generate synthetic data with an LLM and ellmer"
+title: "Generate data with an LLM and ellmer"
 execute:
   eval: false
 format: html
 ---
 
-Generating synthetic datasets is useful in various settings, from education to software testing, enabling controlled, customizable data. There are many tasks you might want to simulate data for, including:
+Generating realistic, but fake, datasets is useful in various settings, from education to software testing, enabling controlled data that precisely fits your needs. There are many tasks you might want to simulate data for, including:
 
-* **Package or app testing**. Simulated data is helpful for testing when developing packages or apps.
+* **Package or app testing**. Fake, but realistic, data is helpful for testing when developing packages or apps.
 
-* **Teaching**. You might need to demonstrate a particular skill or test students in a particular way that requires you to simulate data that precisely meets your teaching needs.
+* **Teaching**. You might need to demonstrate a particular skill or test students in a particular way that requires you to create data that precisely meets your teaching needs.
 
 * **Prototyping a report**. You might need to create a report before the data is available. Simulate data that matches how the final data will look so you can build your report, dashboard, or app ahead of time.
 
-* **Clinical trial simulations**. Data simulation is a common task for clinical trial simulations.
+* **Clinical trial simulations**. You might simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting an actual clinical trial.
+
+* **Synthetic data for model training or validation**. Synthetic data overcomes the limitations of real datasets in model development, letting you protect user privacy, simulate edge-case scenarios, and augment existing data. Synthetic data is especially valuable when real data is scarce. 
 
 Popular large language models (LLMs) are great at simulating data, particularly when accuracy or strict realism isn't required. You might have used the chat interface of ChatGPT or another LLM to simulate data. Some model providers even let you directly download a CSV of the data from the chat interface.
 
-However, if you want to integrate the data directly into your coding environment or automate data generation, using the LLM's API will streamline the process. In this blog post, **we'll show you how interact with LLMs in R with the ellmer package**, creating a command-line tool and a Shiny app that generate synthetic data. You can see the deployed app [here](https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38). 
+However, if you want to integrate the data directly into your coding environment or automate data generation, using the LLM's API will streamline the process. In this blog post, **we'll show you how interact with LLMs in R with the ellmer package**, creating a command-line tool and a Shiny app that simulate data. You can see the deployed app [here](https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38). 
 
-![By the end of this blog post, you'll learn how to create a Shiny app that generates synthetic data and visualizes it.](images/app.png)
+![By the end of this blog post, you'll learn how to create a Shiny app that generates a dataset and visualizes it.](images/app.png)
 
 ::: {.callout-tip}
 To learn more about ellmer, check out our [recent blog post](https://posit.co/blog/announcing-ellmer/).
@@ -29,7 +31,7 @@ We're going to build up to a Shiny app that takes user input, simulates data, an
 
 # Command-line chat
 
-As mentioned earlier, common LLMs can simulate data for you, often through a chat interface. However, this typically requires downloading the data and manually loading it into R or Python, which adds an extra step to the workflow. 
+As mentioned earlier, common LLMs can simulate data for you, often through a chat interface. Without much prompting, they will generally simulate realistic-looking data that fits a particular description. However, this typically requires downloading the data and manually loading it into R or Python, which adds an extra step to the workflow. 
 
 Let's build a small tool in R using the [ellmer package](https://ellmer.tidyverse.org/) to simulate data. ellmer provides functions for working with LLMs from R. 
 
@@ -112,7 +114,9 @@ We can improve our process by asking the model to **format the data like a CSV**
 
 First, we need to update the system prompt to instruct the LLM to generate the data strings in a consistent CSV format.
 
-```markdown
+**System prompt:**
+
+```{markdown}
 Generate tabular data based on the user's request. Limit the data to 10 rows unless the user specifically requests more.
 
 Generate the data in a format that is readable by the R function `readr::read_csv()`. For example:
@@ -269,7 +273,9 @@ chat$chat("tax data by state, with three columns", echo = FALSE)
 
 The final step is to update our prompt to instruct the LLM when to use the tool. Because our tool is pretty simple, we could probably get away without doing this step, but it's good practice and will make it more likely that the model behaves as expected.
 
-```markdown
+**System prompt:**
+
+```{markdown}
 Generate tabular data based on the user's request. Limit the data to 10 rows unless the user specifically requests more.
 
 Create a string of data in a format that is readable by the R function `readr::read_csv()`. For example:
@@ -290,14 +296,14 @@ Do not include any text formatting the data (e.g., no backticks). Do not include
 
 Then, pass that string of data to the function `read_csv_string()`. This function will use `readr::read_csv()` to read the string into R. The function returns a tibble.   
 
-Treat a tibble response from `read_csv_string()` as a success. If the function throws an error, treat that as a failure and re-call the function with a different string of data.  
+Treat a tibble response from `read_csv_string()` as a success. If the function throws an error, treat that as a failure and re-call the function with a different string of data. 
 ```
 
 Alone, however, our script isn't very helpful. **The LLM generates data, but it doesn't get saved anywhere.** `chat$chat()` returns as a string, so if we ask the LLM to return our table we're going to run into the same issue as before: we need a way to read it into R.
 
 To allow the data to persist, we could write it to a file or database. If we're using our tool in a Shiny app, we can update a reactive value to the generated data. Let's see how that would work.
 
-# Generate synthetic data from a Shiny app
+# Generate data from a Shiny app
 
 To embed our data generation functionality in a Shiny app, we'll need to do three main things:
 
@@ -396,6 +402,8 @@ We'll need to make a few changes to the prompt, including telling the app how to
 
 We relied on the LLM's native data generation capabilities, asking the model to create a string of data. This works pretty well for the small examples shown here, but you may want more control over the data, care about reproducibility, or have specific requirements for the data that the LLM doesn't always get right.
 
+## Code generation
+
 Another option is to ask the LLM to generate R code that creates data, which provides a lot of flexibility, but may take careful prompt design. Alternatively, you can have the LLM generate arguments to an R function (e.g., arguments to `rnorm()` or to functions from the [charlatan](https://docs.ropensci.org/charlatan/) package) to maintain greater control over the data structure.
 
 Below is a function that evaluates code passed as a string. You can see the full example [here](https://github.com/skaltman/data-generation-blog/blob/main/scripts/04-tools-r-code.R). 
@@ -421,6 +429,44 @@ create_data <- function(code) {
 }
 ```
 
+If you want to store the data in a database, you could also ask the LLM to write SQL code to generate the data and write to a database. 
+
+```{r}
+#' Executes a SQL query to create a new table with simulated data
+#'
+#' @param query A DuckDB SQL query; must be a CREATE statement.
+#' @returns A string representing the query
+create_data <- function(query) {
+  tryCatch(
+    {
+      dbExecute(con, query)
+    },
+    error = function(err) {
+      stop(err)
+    }
+  )
+
+  query
+}
+
+chat <- chat_openai(
+  model = "gpt-4o",
+  system_prompt = read_lines(here::here("prompts/prompt-sql.md"))
+)
+
+chat$register_tool(tool(
+  create_data,
+  "Executes a DuckDB SQL query that creates a new table with simulated data.",
+  query = type_string(
+      "A string contained valid DuckDB SQL that generates data. The query must be a CREATE statement."
+  )
+))
+```
+
+See the full example and prompt. 
+
+## Structured data
+
 If you know the column names and types of data you want to generate, you could also use [structured data](https://ellmer.tidyverse.org/articles/structured-data.html). The structured data features allows you to define the elements of data you want to extract from text or images. However, this only works if you know the number of columns and their types that you want to extract. 
 
 ```{r}
@@ -431,7 +477,7 @@ chat <- chat_openai(
 
 response <- 
   chat$chat(
-    "data with 2 columns, x and y. x should have a normal distribution and y be random strings.",
+    "data with 2 columns, x and y. x should have a normal distribution and y should contain random strings.",
     echo = FALSE
   )
 
@@ -452,6 +498,8 @@ df <-
 Data generation is useful in many contexts and is a great, relatively straightforward, use of an LLM API. In this blog post, you saw how to create tools with ellmer to generate data. 
 
 See all the code and prompts used in the examples [here](https://github.com/skaltman/data-generation-blog/tree/main).
+
+In these examples, we limit the size of the generated datasets to minimize API usage costs. However, you can easily adjust the settings to generate larger datasets as needed.
 
 ::: {.callout-note}
 For more AI examples, check out the [Posit AI Connect Cloud portfolio](https://connect.posit.cloud/posit-ai), which includes another [dataset generator app](https://posit-ai-data-generator.share.connect.posit.cloud/). 
