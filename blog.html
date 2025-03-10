@@ -98,22 +98,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Generating realistic, but fake, datasets is useful in various settings, from education to software testing, enabling controlled data that precisely fits your needs. There are many tasks you might want to simulate data for, including:</p>
-<ul>
-<li><p><strong>Package or app testing</strong>. Fake, but realistic, data is helpful for testing when developing packages or apps.</p></li>
-<li><p><strong>Teaching</strong>. You might need to demonstrate a particular skill or test students in a particular way that requires you to create data that precisely meets your teaching needs.</p></li>
-<li><p><strong>Prototyping a report</strong>. You might need to create a report before the data is available. Simulate data that matches how the final data will look so you can build your report, dashboard, or app ahead of time.</p></li>
-<li><p><strong>Clinical trial simulations</strong>. You might simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting an actual clinical trial.</p></li>
-<li><p><strong>Synthetic data for model training or validation</strong>. Synthetic data overcomes the limitations of real datasets in model development, letting you protect user privacy, simulate edge-case scenarios, and augment existing data. Synthetic data is especially valuable when real data is scarce.</p></li>
-</ul>
-<p>Popular large language models (LLMs) are great at simulating data, particularly when accuracy or strict realism isn’t required. You might have used the chat interface of ChatGPT or another LLM to simulate data. Some model providers even let you directly download a CSV of the data from the chat interface.</p>
-<p>However, if you want to integrate the data directly into your coding environment or automate data generation, using the LLM’s API will streamline the process. In this blog post, <strong>we’ll show you how to interact with LLMs in R with the ellmer package</strong>, creating a command-line tool and a Shiny app that simulate data. You can see the deployed app <a href="https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38">here</a>.</p>
+<p>Generating realistic, but fake, datasets is useful in various settings, from education to software testing, enabling controlled data that precisely fits your needs.</p>
+<p>In this blog post, we’ll use the <strong><a href="https://ellmer.tidyverse.org/">ellmer package</a> to generate datasets with an LLM.</strong> ellmer simplifies the process of working with LLMs from R.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/app.png" class="img-fluid figure-img"></p>
-<figcaption>By the end of this blog post, you’ll learn how to create a Shiny app that generates a dataset and visualizes it.</figcaption>
+<p><video src="videos/03-command-line-function.mp4" class="img-fluid" controls=""><a href="videos/03-command-line-function.mp4">Video</a></video></p>
+<figcaption>Among other tools, we’ll create an R function that generates data with an LLM.</figcaption>
 </figure>
 </div>
+<p>Specifically, we will:</p>
+<ol type="1">
+<li>Use <strong>ellmer to create a command-line tool</strong> that generates data from a given description.</li>
+<li>Use ellmer and Shiny to <strong>create a <a href="https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38">Shiny app</a> that generates data, visualizes it, and makes it available for download.</strong></li>
+</ol>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -127,11 +124,24 @@ Tip
 <p>To learn more about ellmer, check out our <a href="https://posit.co/blog/announcing-ellmer/">recent blog post</a>.</p>
 </div>
 </div>
-<p>We’re going to build up to a Shiny app that takes user input, simulates data, and visualizes and summarizes that data. But first, <strong>let’s make a command-line tool.</strong></p>
+<section id="why-simulate-data-with-an-llm" class="level2">
+<h2 class="anchored" data-anchor-id="why-simulate-data-with-an-llm">Why simulate data with an LLM?</h2>
+<p>There are many tasks you might want to simulate realistic-looking data for, including:</p>
+<ul>
+<li><p><strong>Package or app testing</strong>. Fake data that matches certain criteria is helpful for testing when developing packages or apps.</p></li>
+<li><p><strong>Teaching</strong>. Demonstrate a particular skill or test students in a particular by creating data that precisely meets your teaching needs.</p></li>
+<li><p><strong>Prototyping a report</strong>. Design a report, dashboard, or app before the data is available by creating data in the same format as the real data.</p></li>
+<li><p><strong>Clinical trial simulations</strong>. Simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting an actual clinical trial.</p></li>
+<li><p><strong>Synthetic data for model training or validation</strong>. Synthetic data overcomes the limitations of real datasets in model development, letting you protect user privacy, simulate edge-case scenarios, and augment existing data. Synthetic data is especially valuable when real data is scarce.</p></li>
+</ul>
+<p>Popular large language models (LLMs) are proficient and fast at simulating realistic-looking data. Using an LLM can substantially speed up the process of dataset creation.</p>
+<p>You might have used ChatGPT or another LLM’s chat interface to simulate data. Some model providers even let you download the data directly as a CSV. However, this workflow requires manual interaction: using the chat interface, downloading the file, and loading it into your coding environment.</p>
+<p>To generate datasets programmatically, you’ll want to interact directly with the LLM’s API. That’s where ellmer comes in. <strong>We’ll use ellmer to interact with the LLM and generate data programmatically and entirely from R.</strong></p>
+<p>First, let’s make our command-line tool.</p>
+</section>
 <section id="command-line-chat" class="level1">
 <h1>Command-line chat</h1>
-<p>As mentioned earlier, common LLMs can simulate data for you, often through a chat interface. Without much prompting, they will generally simulate realistic-looking data that fits a particular description. However, this typically requires downloading the data and manually loading it into R or Python, which adds an extra step to the workflow.</p>
-<p>Let’s build a small tool in R using the <a href="https://ellmer.tidyverse.org/">ellmer package</a> to simulate data. ellmer provides functions for working with LLMs from R.</p>
+<p>Let’s build a small command-line tool in R using the <a href="https://ellmer.tidyverse.org/">ellmer package</a> to simulate data.</p>
 <section id="setup" class="level2">
 <h2 class="anchored" data-anchor-id="setup">Setup</h2>
 <p>First, we need to download the necessary packages and set up API keys. You’ll need:</p>
@@ -142,7 +152,7 @@ Tip
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"ellmer"</span>, <span class="st">"usethis"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Next, add your API key(s) to your <code>.Renviron</code> file. Easily edit your <code>.Renviron</code> with <code>usethis::edit_r_environ()</code>.</p>
+<p>Next, add your API key(s) to your <code>.Renviron</code> file. You can open your <code>.Renviron</code> for editing with <code>usethis::edit_r_environ()</code>.</p>
 <p>You can choose the LLM that you want to work with. ellmer includes functions for working with OpenAI, Anthropic, Gemini, and other providers. You can see a full list of supported providers <a href="https://ellmer.tidyverse.org/#providers">here</a>.</p>
 <p>Add your desired API key(s) to your <code>.Renviron</code>, for example:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">OPENAI_API_KEY</span><span class="op">=</span>my-api-key-openai-uejkK92</span>
@@ -181,7 +191,7 @@ Tip
 </section>
 <section id="start-the-chat" class="level2">
 <h2 class="anchored" data-anchor-id="start-the-chat">Start the chat</h2>
-<p>Next, we start off the chat by telling the LLM to ask the user about the data they want to generate, and then <strong>use <code>live_console()</code> to continue the chat in the console</strong>.</p>
+<p>Next, we start off the chat by telling the LLM to ask the user about the data they want to generate, and then use <code>live_console()</code> to continue the chat in the console.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ellmer)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -367,6 +377,19 @@ tool(
 </section>
 <section id="generate-data-from-a-shiny-app" class="level1">
 <h1>Generate data from a Shiny app</h1>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Experiment with the deployed app <a href="https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38">here</a>.</p>
+</div>
+</div>
 <p>To embed our data generation functionality in a Shiny app, we’ll need to do three main things:</p>
 <ol type="1">
 <li>Create an input to capture the user’s dataset description, and then tell the model about that input.</li>
@@ -450,7 +473,7 @@ tool(
 </div>
 <p>Now, we’ll be able to use the generated dataset in the rest of our app. We’ll add functionality to download the data as a CSV, view the data in a table, and visualize the data in a plot.</p>
 <div class="quarto-video"><video id="video_shortcode_videojs_video2" class="video-js vjs-default-skin vjs-fluid" controls="" preload="auto" data-setup="{}" title=""><source src="videos/02-app.mp4"></video></div>
-<p>We’ll need to make a few changes to the prompt, including telling the app how to use plotting tool. You can see the full prompt <a href="https://github.com/skaltman/data-generation-blog/blob/main/prompts/prompt-app.md">here</a>.</p>
+<p>We’ll need to make a few changes to the prompt, including telling the app how to use the plotting tool. You can see the full prompt <a href="https://github.com/skaltman/data-generation-blog/blob/main/prompts/prompt-app.md">here</a>.</p>
 </section>
 <section id="other-strategies" class="level1">
 <h1>Other strategies</h1>
@@ -481,35 +504,37 @@ tool(
 </div>
 <p>If you want to store the data in a database, you could also ask the LLM to write SQL code to generate the data and write to a database.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Executes a SQL query to create a new table with simulated data</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param query A DuckDB SQL query; must be a CREATE statement.</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @returns A string representing the query</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>create_data <span class="ot">&lt;-</span> <span class="cf">function</span>(query) {</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>(</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    {</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">dbExecute</span>(con, query)</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(err) {</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">stop</span>(err)</span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  query</span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>chat <span class="ot">&lt;-</span> <span class="fu">chat_openai</span>(</span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> <span class="st">"gpt-4o"</span>,</span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">system_prompt =</span> <span class="fu">read_lines</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"prompts/prompt-sql.md"</span>))</span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>chat<span class="sc">$</span><span class="fu">register_tool</span>(<span class="fu">tool</span>(</span>
-<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>  create_data,</span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Executes a DuckDB SQL query that creates a new table with simulated data."</span>,</span>
-<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">query =</span> <span class="fu">type_string</span>(</span>
-<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>      <span class="st">"A string contained valid DuckDB SQL that generates data. The query must be a CREATE statement."</span></span>
-<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>con <span class="ot">&lt;-</span> <span class="fu">dbConnect</span>(<span class="fu">duckdb</span>(), <span class="at">dbdir =</span> <span class="st">":memory:"</span>, <span class="at">read_only =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' Executes a SQL query to create a new table with simulated data</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param query A DuckDB SQL query; must be a CREATE statement.</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @returns A string representing the query</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>create_data <span class="ot">&lt;-</span> <span class="cf">function</span>(query) {</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>(</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    {</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">dbExecute</span>(con, query)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(err) {</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">stop</span>(err)</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  query</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>chat <span class="ot">&lt;-</span> <span class="fu">chat_openai</span>(</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> <span class="st">"gpt-4o"</span>,</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">system_prompt =</span> <span class="fu">read_lines</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"prompts/prompt-sql.md"</span>))</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>chat<span class="sc">$</span><span class="fu">register_tool</span>(<span class="fu">tool</span>(</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  create_data,</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Executes a DuckDB SQL query that creates a new table with simulated data."</span>,</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">query =</span> <span class="fu">type_string</span>(</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"A string contained valid DuckDB SQL that generates data. The query must be a CREATE statement."</span></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>See the <a href="https://github.com/skaltman/data-generation-blog/blob/main/scripts/06-sql.R">full example</a> and <a href="https://github.com/skaltman/data-generation-blog/blob/main/prompts/prompt-sql.md">prompt</a>.</p>
 <div class="callout callout-style-default callout-caution callout-titled">
@@ -528,7 +553,7 @@ Caution
 </section>
 <section id="structured-data" class="level2">
 <h2 class="anchored" data-anchor-id="structured-data">Structured data</h2>
-<p>If you know the column names and types of data you want to generate, you could also use <a href="https://ellmer.tidyverse.org/articles/structured-data.html">structured data</a>. The structured data features allows you to define the elements of data you want to extract from text or images. However, this only works if you know the number of columns and their types that you want to extract.</p>
+<p>If you know the column names and types of data you want to generate, you could also use <a href="https://ellmer.tidyverse.org/articles/structured-data.html">structured data</a>. The structured data feature allows you to define the elements of data you want to extract from text or images. However, this only works if you know the number of columns and their types that you want to extract.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>chat <span class="ot">&lt;-</span> <span class="fu">chat_openai</span>(</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">model =</span> <span class="st">"gpt-4o"</span>,</span>
@@ -558,7 +583,7 @@ Caution
 <h1>Recap</h1>
 <p>Data generation is useful in many contexts and is a great, relatively straightforward, use of an LLM API. In this blog post, you saw how to create tools with ellmer to generate data.</p>
 <p>See all the code and prompts used in the examples <a href="https://github.com/skaltman/data-generation-blog/tree/main">here</a>.</p>
-<p>In these examples, we limit the size of the generated datasets to minimize API usage costs. However, you can easily adjust the settings to generate larger datasets as needed.</p>
+<p>In these examples, we limit the size of the generated datasets to minimize API usage costs. However, for your own work, you can adjust the prompts to generate larger datasets as needed.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
