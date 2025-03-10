@@ -463,7 +463,7 @@ chat$register_tool(tool(
 ))
 ```
 
-See the full example and prompt. 
+See the [full example](https://github.com/skaltman/data-generation-blog/blob/main/scripts/06-sql.R) and [prompt](https://github.com/skaltman/data-generation-blog/blob/main/prompts/prompt-sql.md). 
 
 ## Structured data
 
@@ -492,6 +492,7 @@ df <-
     )
   )
 ```
+
 
 # Recap
 
