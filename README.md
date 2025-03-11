@@ -1,1 +1,1 @@
-# Create synthetic datasets with LLMs and ellmer
+# Create synthetic datasets with an LLM and ellmer
