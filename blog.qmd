@@ -33,11 +33,11 @@ There are many tasks you might want to simulate realistic-looking data for, incl
 
 * **Clinical trial simulations**. Simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting a clinical trial.
 
-* **Synthetic data for model training or validation**. Synthetic data overcomes the limitations of real datasets in model development, letting you protect user privacy, simulate edge-case scenarios, and augment existing data. Synthetic data is especially valuable when real data is scarce. 
+* **Synthetic data for model training or validation**. Use synthetic data to overcome the limitations of real datasets in model development, protecting user privacy, simulating edge-case scenarios, and augmenting existing data. Synthetic data is especially valuable when real data is scarce.
 
 Popular LLMs are proficient and fast at simulating realistic-looking data. Using an LLM can substantially speed up the process of creating a dataset. 
 
-You might have used ChatGPT or another LLM chat interface to simulate data. Some model providers even let you download the data directly as a CSV. However, this workflow requires manual interaction: using the chat interface, downloading the file, and loading it into your coding environment.
+You might have used ChatGPT or another LLM chat interface to simulate data. Some model providers even let you download the data directly as a CSV. However, this workflow requires manual interaction: using the chat interface, downloading the file, and loading it into your development environment.
 
 To generate datasets programmatically, you'll want to interact directly with the LLM’s API. That's where ellmer comes in. **We'll use ellmer to interact with the LLM and generate data programmatically and entirely from R.**
 
@@ -169,23 +169,23 @@ generate_data <- function(data_description) {
 Now, we can call `generate_data()`, passing in a description of the data we want to generate. 
 
 ```{r}
-generate_data("tax revenue data by state, with three columns")
+generate_data("data with two columns, x and y, where x and y are negatively correlated")
 ```
 
 ```
-# A tibble: 10 × 3
-   state      tax_rate revenue_millions
-   <chr>         <dbl>            <dbl>
- 1 Alabama        4                2150
- 2 Alaska         0                 980
- 3 Arizona        5.6              3250
- 4 California     7.25             8900
- 5 Florida        6                4500
- 6 Georgia        4                2800
- 7 Hawaii         4                1200
- 8 Idaho          6                 890
- 9 Illinois       6.25             4100
-10 Texas          6.25             6300
+# A tibble: 10 × 2
+       x     y
+   <dbl> <dbl>
+ 1     1    10
+ 2     2     9
+ 3     3     8
+ 4     4     7
+ 5     5     6
+ 6     6     5
+ 7     7     4
+ 8     8     3
+ 9     9     2
+10    10     1
 ```
 
 ## Tool calling
@@ -318,7 +318,7 @@ To allow the data to persist, we could write it to a file or database. If we're 
 Experiment with the deployed app [here](https://connect.posit.cloud/skaltman/content/01957333-ddf8-765e-de40-f1eba12e6a38).
 :::
 
-To embed our data generation functionality in a Shiny app, we'll need to do three main things:
+To embed our data generation functionality in a Shiny app, we will:
 
 1. Create an input to capture the user's dataset description, and then tell the model about that input.
 2. Edit our tool function to assign the newly created dataset to a reactive value. This will allow us to use the newly created dataset in various places in the Shiny app.
@@ -371,7 +371,7 @@ server <- function(input, output, session) {
   # Create a reactive value for the data
   data_rv <- reactiveVal()
 
-  # /* Define tools */
+  # Define tools -------
 
   #' Reads a CSV string into R using `readr::read_csv()`
   #'
@@ -389,7 +389,7 @@ server <- function(input, output, session) {
     system_prompt = read_lines("prompt-app.md")
   )
 
-  # /* Register tools */
+  # Register tools -------
 
   chat$register_tool(tool(
     read_csv_string,
@@ -407,7 +407,7 @@ server <- function(input, output, session) {
 
 Now, we'll be able to use the generated dataset in the rest of our app. We'll add functionality to download the data as a CSV, view the data in a table, and visualize the data in a plot. 
 
-{{< video videos/02-app.mp4 >}}
+{{< video videos/02-app-examples.mp4 >}}
 
 We'll need to make a few changes to the prompt, including telling the app how to use the plotting tool. You can see the full prompt [here](https://github.com/skaltman/data-generation-blog/blob/main/prompts/prompt-app.md). 
 
