@@ -5,7 +5,7 @@ execute:
 format: html
 ---
 
-Generating realistic but synthetic datasets is useful in various settings, from education to software testing. It enables controlled data that precisely fits one's needs. 
+Generating realistic datasets is useful in various settings, from education to software testing. It enables controlled data that precisely fits one's needs. 
 
 In this blog post, we'll use the **[ellmer package](https://ellmer.tidyverse.org/) to generate datasets with an LLM.** ellmer simplifies the process of working with large language models (LLMs) from R. 
 
