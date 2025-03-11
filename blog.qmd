@@ -29,7 +29,7 @@ There are many tasks you might want to simulate realistic-looking data for, incl
 
 * **Teaching**. Demonstrate a particular skill or assess students on a particular concept by creating data that precisely meets your teaching needs.
 
-* **Prototyping a report**. Design a report, dashboard, or app before the data is available by creating data in the same format as the anticipated real data. 
+* **Prototyping a report**. Design a report, dashboard, or app before the data is available by creating data in the same format as the real data. 
 
 * **Clinical trial simulations**. Simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting a clinical trial.
 
