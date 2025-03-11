@@ -522,6 +522,6 @@ See all the code and prompts used in the examples [here](https://github.com/skal
 In these examples, we limit the size of the generated datasets to minimize API usage costs. However, for your own work, you can adjust the prompts to generate larger datasets as needed.
 
 ::: {.callout-note}
-For more AI examples, check out the [Posit AI Connect Cloud portfolio](https://connect.posit.cloud/posit-ai), which includes another [dataset generator app](https://posit-ai-data-generator.share.connect.posit.cloud/). 
+For more AI examples, check out the [Posit AI Connect Cloud portfolio](https://connect.posit.cloud/posit-ai). 
 :::
 
