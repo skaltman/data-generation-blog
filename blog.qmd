@@ -5,9 +5,9 @@ execute:
 format: html
 ---
 
-Generating realistic, but fake, datasets is useful in various settings, from education to software testing, enabling controlled data that precisely fits your needs. 
+Generating realistic datasets is useful in various settings, from education to software testing. It enables controlled data that precisely fits one's needs. 
 
-In this blog post, we'll use the **[ellmer package](https://ellmer.tidyverse.org/) to generate datasets with an LLM.** ellmer simplifies the process of working with LLMs from R. 
+In this blog post, we'll use the **[ellmer package](https://ellmer.tidyverse.org/) to generate datasets with an LLM.** ellmer simplifies the process of working with large language models (LLMs) from R. 
 
 ![Among other tools, we'll create an R function that generates data with an LLM.](videos/03-command-line-function.mp4)
 
@@ -25,19 +25,19 @@ To learn more about ellmer, check out our [recent blog post](https://posit.co/bl
 
 There are many tasks you might want to simulate realistic-looking data for, including:
 
-* **Package or app testing**. Fake data that matches certain criteria is helpful for testing when developing packages or apps.
+* **Package or app testing**. Synthetic data that matches certain criteria is helpful for testing when developing packages or apps.
 
-* **Teaching**. Demonstrate a particular skill or test students in a particular by creating data that precisely meets your teaching needs.
+* **Teaching**. Demonstrate a particular skill or assess students on a particular concept by creating data that precisely meets your teaching needs.
 
 * **Prototyping a report**. Design a report, dashboard, or app before the data is available by creating data in the same format as the real data. 
 
-* **Clinical trial simulations**. Simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting an actual clinical trial.
+* **Clinical trial simulations**. Simulate data to explore potential outcomes, estimate statistical power, or plan analyses before conducting a clinical trial.
 
 * **Synthetic data for model training or validation**. Synthetic data overcomes the limitations of real datasets in model development, letting you protect user privacy, simulate edge-case scenarios, and augment existing data. Synthetic data is especially valuable when real data is scarce. 
 
-Popular large language models (LLMs) are proficient and fast at simulating realistic-looking data. Using an LLM can substantially speed up the process of dataset creation. 
+Popular LLMs are proficient and fast at simulating realistic-looking data. Using an LLM can substantially speed up the process of creating a dataset. 
 
-You might have used ChatGPT or another LLM's chat interface to simulate data. Some model providers even let you download the data directly as a CSV. However, this workflow requires manual interaction: using the chat interface, downloading the file, and loading it into your coding environment.
+You might have used ChatGPT or another LLM chat interface to simulate data. Some model providers even let you download the data directly as a CSV. However, this workflow requires manual interaction: using the chat interface, downloading the file, and loading it into your coding environment.
 
 To generate datasets programmatically, you'll want to interact directly with the LLM’s API. That's where ellmer comes in. **We'll use ellmer to interact with the LLM and generate data programmatically and entirely from R.**
 
@@ -45,13 +45,13 @@ First, let's make our command-line tool.
 
 # Command-line chat
 
-Let's build a small command-line tool in R using the [ellmer package](https://ellmer.tidyverse.org/) to simulate data. 
+Let's build a small command-line tool in R that simulates data using the [ellmer package](https://ellmer.tidyverse.org/). 
 
 ## Setup
 
-First, we need to download the necessary packages and set up API keys. You'll need:
+First, we need to install the necessary packages and set up API keys. You'll need:
 
-* [ellmer](https://ellmer.tidyverse.org/), which simplifies the process of interacting with LLMs from R, and
+* [ellmer](https://ellmer.tidyverse.org/), which simplifies the process of interacting with LLMs from R and
 * [usethis](https://usethis.r-lib.org/), which we'll use to set up the API keys.
 
 ```{r}
@@ -74,7 +74,7 @@ GOOGLE_API_KEY=api-key-google-palw2n
 
 Now, we'll **create a chat with ellmer**. 
 
-The `chat_*()` functions, like `chat_openai()` and `chat_claude()`, each create a `Chat` object, essentially a record of the conversation with the user and the chatbot. Choose your `chat_*()` function based on your desired LLM provider (see the full list [here](https://ellmer.tidyverse.org/reference/index.html#chatbots)).
+The `chat_*()` functions, like `chat_openai()` and `chat_claude()`, create a `Chat` object, essentially a record of the conversation between the user and the chatbot. Choose your `chat_*()` function based on your desired LLM provider (see the full list [here](https://ellmer.tidyverse.org/reference/index.html#chatbots)).
 
 ```{r}
 library(ellmer)
@@ -92,13 +92,13 @@ LLM providers typically offer multiple models. Specify your desired model with t
 Because we want to use this chat to generate data, we'll also **specify a [system prompt](https://ellmer.tidyverse.org/articles/prompt-design.html) instructing the LLM to generate tabular data** based on the criteria given by the user. 
 
 ::: callout-tip
-It's best practice to write system prompts in a markdown file. Later, we'll write a longer system prompt and do just that, but for now we'll just specify it directly to the `system_prompt` argument. For more information about prompt design, see [https://ellmer.tidyverse.org/articles/prompt-design.html](https://ellmer.tidyverse.org/articles/prompt-design.html).
+It's best practice to write system prompts in a markdown file. Later, we'll write a longer system prompt and do just that, but for now, we'll just specify it directly to the `system_prompt` argument. For more information about prompt design, see [https://ellmer.tidyverse.org/articles/prompt-design.html](https://ellmer.tidyverse.org/articles/prompt-design.html).
 :::
 
 
 ## Start the chat
 
-Next, we start off the chat by telling the LLM to ask the user about the data they want to generate, and then use `live_console()` to continue the chat in the console.  
+Next, we start the chat by telling the LLM to ask the user about the data they want to generate. Then, we use `live_console()` to continue the chat in the console.  
 
 ```{r}
 library(ellmer)
@@ -144,7 +144,7 @@ TransactionID, Make, Model, Year, Price, Salesperson
 009, Subaru, Outback, 2020, 27000, James Lee
 010, Kia, Soul, 2021, 21000, Linda Thompson
 
-Do not include any text formatting the data (e.g., no backticks).
+Do not include any text formatting in the data (e.g., no backticks).
 
 Do not include any other information with the dataset. 
 ```
@@ -194,13 +194,13 @@ One issue with our function is that it lacks a correction mechanism if the LLM a
 
 We can use [tool calling](https://ellmer.tidyverse.org/articles/tool-calling.html) to ensure that the LLM generates correctly formatted data and can automatically retry if an error occurs. Generally, you **use tool calling to extend the functionality of an LLM**. For example, LLMs generally don't know the time at your location, but we can write an R function that returns that information. Then, we tell the LLM to call that R function and use the result in some way, essentially granting the LLM new skills. 
 
-In our example, the LLM can generate data as text, but can't actually read that data into R. **We'll create a tool that reads the generated string of data into R.** ellmer will handle retrying if the tool call fails because the LLM generates a string that `read_csv()` can't parse. 
+In our example, the LLM can generate data as text but can't actually read that data into R. **We'll create a tool that reads the generated string of data into R.** ellmer will handle retrying if the tool call fails because the LLM generates a string that `read_csv()` can't parse. 
 
 For more information about tool calling, see [Tool Calling](https://ellmer.tidyverse.org/articles/tool-calling.html).
 
 ### Define a tool function
 
-First, we need to write a function that **takes a CSV-formatted string and reads it into a dataframe**. We'll also need to **document the function with [roxygen2 comments ](https://roxygen2.r-lib.org/).** These comments help the LLM understand how to use our function, just like they would help a human use your function. 
+First, we need to write a function that **takes a CSV-formatted string and reads it into a data frame**. We'll also need to **document the function with [roxygen2 comments ](https://roxygen2.r-lib.org/).** These comments help the LLM understand how to use our function, just like they would help a human use your function. 
 
 ```{r}
 #' Reads a CSV string into R using `readr::read_csv()`
@@ -301,7 +301,7 @@ TransactionID, Make, Model, Year, Price, Salesperson
 009, Subaru, Outback, 2020, 27000, James Lee
 010, Kia, Soul, 2021, 21000, Linda Thompson
 
-Do not include any text formatting the data (e.g., no backticks). Do not include any other information with the dataset. 
+Do not include any text formatting in the data (e.g., no backticks). Do not include any other information with the dataset. 
 
 Then, pass that string of data to the function `read_csv_string()`. This function will use `readr::read_csv()` to read the string into R. The function returns a tibble.   
 
@@ -321,7 +321,7 @@ Experiment with the deployed app [here](https://connect.posit.cloud/skaltman/con
 To embed our data generation functionality in a Shiny app, we'll need to do three main things:
 
 1. Create an input to capture the user's dataset description, and then tell the model about that input.
-2. Edit our tool function to assign the created dataset to a reactive value. This will let us use the newly created dataset in various places in the Shiny app.
+2. Edit our tool function to assign the newly created dataset to a reactive value. This will allow us to use the newly created dataset in various places in the Shiny app.
 3. Update our prompt.
 
 First, let's manage the user input. In the app UI, we'll need some kind of text input and a button that triggers the data generation. 
@@ -417,7 +417,7 @@ We relied on the LLM's native data generation capabilities, asking the model to 
 
 ## Code generation
 
-Another option is to ask the LLM to generate R code that creates data, which provides a lot of flexibility, but may take careful prompt design. Alternatively, you can have the LLM generate arguments to an R function (e.g., arguments to `rnorm()` or to functions from the [charlatan](https://docs.ropensci.org/charlatan/) package) to maintain greater control over the data structure.
+Another option is to ask the LLM to generate R code that creates data, which provides a lot of flexibility but may take careful prompt design. Alternatively, you can have the LLM generate arguments to an R function (e.g., arguments to `rnorm()` or to functions from the [charlatan](https://docs.ropensci.org/charlatan/) package) to maintain greater control over the data structure.
 
 Below is a function that evaluates code passed as a string. You can see the full example [here](https://github.com/skaltman/data-generation-blog/blob/main/scripts/04-tools-r-code.R). 
 
@@ -486,7 +486,7 @@ Letting an LLM generate and execute code provides flexibility, but can be risky.
 
 ## Structured data
 
-If you know the column names and types of data you want to generate, you could also use [structured data](https://ellmer.tidyverse.org/articles/structured-data.html). The structured data feature allows you to define the elements of data you want to extract from text or images. However, this only works if you know the number of columns and their types that you want to extract. 
+If you know the column names and types of data you want to generate, you could also use [structured data](https://ellmer.tidyverse.org/articles/structured-data.html). The structured data feature allows you to define the elements of data you want to extract from text or images. However, this only works if you know the number of columns and the types that you want to extract. 
 
 ```{r}
 chat <- chat_openai(
